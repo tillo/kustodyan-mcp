@@ -1,0 +1,167 @@
+include:
+  - project: mdapi/ci-templates
+    file: /buildkit-before-script.yml
+    ref: main
+  - project: mdapi/ci-templates
+    file: /build.yml
+    ref: main
+  - project: mdapi/ci-templates
+    file: /secret-scan.yml
+    ref: main
+
+stages:
+  - build
+  - tag
+  - scan
+  - notify
+
+buildkit:
+  extends: .buildkit-build
+  variables:
+    # Route the base image (FROM ${REGISTRY}node:...) through the group dependency
+    # proxy in CI. ARG REGISTRY defaults to empty so the same Dockerfile still builds
+    # from Docker Hub in the GitHub Actions workflow.
+    BUILD_ARGS: "--opt build-arg:REGISTRY=${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/"
+
+# Mints :<mcp-version>-mdapi.<pipeline> from /etc/image-version (see Dockerfile),
+# pointing at the same digest. Lane-B / Renovate consumers; :latest stays floating
+# for Keel.
+version-tag:
+  extends: .version-tag
+  needs:
+    - buildkit
+
+# SBOM (Syft) + vuln scan (Grype). Non-blocking; pushover only on HIGH/CRITICAL.
+scan:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/alpine:latest
+  stage: scan
+  tags:
+    - mdapi
+  rules:
+    - when: on_success
+  before_script:
+    - apk add --no-cache curl python3
+    - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+    - curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+    - |
+      mkdir -p ~/.docker
+      echo "{
+        \"auths\": {
+          \"${CI_REGISTRY}\": {
+            \"auth\": \"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"
+          }
+        }
+      }" > ~/.docker/config.json
+  script:
+    - IMAGE="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+    - echo "Generating SBOM for ${IMAGE}"
+    - syft "${IMAGE}" -o spdx-json=sbom.spdx.json
+    - echo "Scanning with Grype"
+    - grype sbom:sbom.spdx.json --output json > grype-report.json 2>/dev/null || true
+    - grype sbom:sbom.spdx.json --output table 2>/dev/null || true
+    - |
+      FINDINGS=$(python3 - <<'PYEOF'
+      import json, sys
+      try:
+          data = json.load(open('grype-report.json'))
+      except Exception:
+          sys.exit(0)
+      hits = [
+          f"{m['vulnerability']['id']} {m['vulnerability']['severity']} — {m['artifact']['name']}:{m['artifact']['version']}"
+          for m in data.get('matches', [])
+          if m['vulnerability'].get('severity', '').upper() in ('HIGH', 'CRITICAL')
+      ]
+      if hits:
+          print('\n'.join(hits[:20]))
+      PYEOF
+      )
+      if [ -n "$FINDINGS" ]; then
+        COUNT=$(echo "$FINDINGS" | wc -l)
+        curl -sf \
+          --form-string "token=$PUSHOVER_API_TOKEN" \
+          --form-string "user=$PUSHOVER_USER_KEY" \
+          --form-string "title=kustodyan-mcp: ${COUNT} HIGH/CRITICAL CVE(s)" \
+          --form-string "message=$(printf '%s\n\n%s' "$IMAGE" "$FINDINGS")" \
+          --form-string "priority=1" \
+          https://api.pushover.net/1/messages.json
+      else
+        echo "No HIGH or CRITICAL CVEs found."
+      fi
+  artifacts:
+    when: always
+    paths:
+      - sbom.spdx.json
+      - grype-report.json
+    expire_in: 7 days
+  allow_failure: true
+
+notify-success:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/alpine:latest
+  stage: notify
+  tags:
+    - mdapi
+  variables:
+    GIT_DEPTH: "5"
+  rules:
+    - when: on_success
+  before_script:
+    - apk add --no-cache git curl python3
+  script:
+    - |
+      REASON=$(python3 - <<'PYEOF'
+      import re
+      try:
+          content = open('build.log').read()
+      except FileNotFoundError:
+          exit()
+      steps = {}
+      for m in re.finditer(r'^#(\d+) \[(\d+/\d+)\] (.+)$', content, re.MULTILINE):
+          steps[m.group(1)] = m.group(3).strip()
+      cached = set(re.findall(r'^#(\d+) CACHED', content, re.MULTILINE))
+      changed = [label for num, label in sorted(steps.items(), key=lambda x: int(x[0])) if num not in cached]
+      if changed:
+          print('\n'.join(changed))
+      PYEOF
+      )
+      if [ "$CI_PIPELINE_SOURCE" = "schedule" ] && [ -z "$REASON" ]; then
+        echo "All layers cached on scheduled run — nothing changed, skipping notification"
+        exit 0
+      fi
+      MSG=$(printf '%s:%s' "$CI_REGISTRY_IMAGE" "$CI_COMMIT_SHORT_SHA")
+      if [ "$CI_PIPELINE_SOURCE" != "schedule" ]; then
+        if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+          CHANGES=$(git log --oneline -5 2>/dev/null || true)
+        else
+          CHANGES=$(git log --oneline "${CI_COMMIT_BEFORE_SHA}..${CI_COMMIT_SHA}" 2>/dev/null || true)
+        fi
+        [ -n "$CHANGES" ] && MSG=$(printf '%s\n\nGit changes:\n%s' "$MSG" "$CHANGES")
+      fi
+      [ -n "$REASON" ] && MSG=$(printf '%s\n\nRebuilt layers:\n%s' "$MSG" "$REASON")
+      curl -sf \
+        --form-string "token=$PUSHOVER_API_TOKEN" \
+        --form-string "user=$PUSHOVER_USER_KEY" \
+        --form-string "title=kustodyan-mcp: new image pushed" \
+        --form-string "message=$MSG" \
+        https://api.pushover.net/1/messages.json
+
+notify-failure:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/alpine:latest
+  stage: notify
+  tags:
+    - mdapi
+  rules:
+    - when: on_failure
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      curl -sf \
+        --form-string "token=$PUSHOVER_API_TOKEN" \
+        --form-string "user=$PUSHOVER_USER_KEY" \
+        --form-string "title=kustodyan-mcp: build failed" \
+        --form-string "message=$(printf 'buildkit job failed.\n%s' "$CI_PIPELINE_URL")" \
+        --form-string "priority=1" \
+        https://api.pushover.net/1/messages.json
+
+secret-scan:
+  extends: .secret-scan

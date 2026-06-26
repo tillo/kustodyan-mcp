@@ -1,0 +1,4 @@
+# Grype ignore list. Curated over time by f/security/grype_ignore_curator
+# (adds entries for HIGH/CRITICAL findings that are upstream won't-fix or not
+# applicable). Start empty.
+ignore: []

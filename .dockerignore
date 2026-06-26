@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.gitignore
+provisioning
+docs
+SESSION_NOTES.md
+*.md
+!README.md
+.github
+npm-debug.log*

@@ -1,0 +1,47 @@
+worker_processes 1;
+pid /tmp/nginx.pid;
+events { worker_connections 256; }
+
+http {
+    # Non-root-writable temp paths so the image can run as an arbitrary UID.
+    client_body_temp_path /tmp/nginx-client;
+    proxy_temp_path       /tmp/nginx-proxy;
+    fastcgi_temp_path     /tmp/nginx-fastcgi;
+    uwsgi_temp_path       /tmp/nginx-uwsgi;
+    scgi_temp_path        /tmp/nginx-scgi;
+    access_log /dev/stdout;
+    error_log  /dev/stderr;
+
+    server {
+        listen ${LISTEN_PORT};
+
+        # Liveness/readiness probe — no auth (the MCP endpoint itself is gated below).
+        location = /healthz {
+            proxy_pass http://127.0.0.1:${INTERNAL_PORT};
+            proxy_set_header Host "localhost";
+        }
+
+        location / {
+            # Bearer token via the Authorization header or a ?token= query param.
+            set $auth_ok 0;
+            if ($http_authorization = "Bearer ${MCP_BEARER_TOKEN}") { set $auth_ok 1; }
+            if ($arg_token = "${MCP_BEARER_TOKEN}")                 { set $auth_ok 1; }
+            if ($auth_ok = 0) { return 401 "Unauthorized\n"; }
+
+            proxy_pass http://127.0.0.1:${INTERNAL_PORT};
+            proxy_http_version 1.1;
+
+            # Present Host/Origin as localhost and drop browser fetch-metadata headers.
+            proxy_set_header Host "localhost";
+            proxy_set_header Origin "http://localhost";
+            proxy_set_header Connection "";
+            proxy_set_header Sec-Fetch-Site "";
+            proxy_set_header Sec-Fetch-Mode "";
+            proxy_set_header Sec-Fetch-Dest "";
+
+            # Streamable HTTP / SSE: no buffering, long read timeout.
+            proxy_buffering off;
+            proxy_read_timeout 3600s;
+        }
+    }
+}

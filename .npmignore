@@ -1,0 +1,12 @@
+provisioning/
+docs/
+SESSION_NOTES.md
+src/
+tsconfig.json
+.gitlab-ci.yml
+.github/
+.grype.yaml
+.dockerignore
+Dockerfile
+nginx.conf.template
+start.sh
