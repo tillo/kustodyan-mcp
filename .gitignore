@@ -1,0 +1,23 @@
+node_modules/
+dist/
+npm-debug.log*
+.env
+.env.*
+*.tsbuildinfo
+# leak-prevention sweep — never commit secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.kubeconfig
+kubeconfig
+kubeconfig.*
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.pfx
+*.p12
+*.tsig
+.netrc
+__pycache__/
+*.pyc

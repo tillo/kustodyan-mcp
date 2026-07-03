@@ -1,0 +1,46 @@
+{
+  "name": "kustodyan-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for the Kustodyan data-protection API (RegData Protection Suite): contextual protect / unprotect / search over the Identity + Engine APIs.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "kustodyan-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "kustodyan",
+    "regdata",
+    "rps",
+    "data-protection",
+    "tokenization",
+    "encryption",
+    "anonymization"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "express": "^5.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
