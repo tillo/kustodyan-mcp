@@ -55,20 +55,22 @@ ignore:
     package:
       name: perl-base
       type: deb
-
-  # --- added by curator on 2026-07-14 (UTC) ---
-  # High — upstream won't-fix
   - vulnerability: CVE-2026-54369
     package:
       name: libacl1
       type: deb
-  # High — upstream won't-fix
   - vulnerability: CVE-2026-54370
     package:
       name: libacl1
       type: deb
-  # High — upstream won't-fix
   - vulnerability: CVE-2026-54371
     package:
       name: libattr1
+      type: deb
+
+  # --- added by curator on 2026-07-15 (UTC) ---
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-41992
+    package:
+      name: gzip
       type: deb
