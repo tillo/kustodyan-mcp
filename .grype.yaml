@@ -15,3 +15,75 @@ ignore:
     package:
       name: gzip
       type: deb
+
+  # --- added by curator on 2026-07-20 (UTC) ---
+  # High — upstream won't-fix
+  - vulnerability: CVE-2025-13151
+    package:
+      name: libtasn1-6
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2025-69720
+    package:
+      name: libtinfo6
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2025-69720
+    package:
+      name: ncurses-base
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2025-69720
+    package:
+      name: ncurses-bin
+      type: deb
+  # Critical — upstream won't-fix
+  - vulnerability: CVE-2026-42496
+    package:
+      name: perl-base
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-42497
+    package:
+      name: perl-base
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-5435
+    package:
+      name: libc-bin
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-5435
+    package:
+      name: libc6
+      type: deb
+  # Critical — upstream won't-fix
+  - vulnerability: CVE-2026-5450
+    package:
+      name: libc-bin
+      type: deb
+  # Critical — upstream won't-fix
+  - vulnerability: CVE-2026-5450
+    package:
+      name: libc6
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-5928
+    package:
+      name: libc-bin
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-5928
+    package:
+      name: libc6
+      type: deb
+  # Critical — upstream won't-fix
+  - vulnerability: CVE-2026-8376
+    package:
+      name: perl-base
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-9538
+    package:
+      name: perl-base
+      type: deb
