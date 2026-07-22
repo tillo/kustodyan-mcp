@@ -6,12 +6,12 @@
 # image runs it in HTTP mode (KUSTODYAN_MCP_TRANSPORT=http) on a loopback port with
 # nginx terminating auth in front.
 #
-# Public default pulls node:24-bookworm-slim from Docker Hub. In CI with a registry
+# Public default pulls node:24-trixie-slim from Docker Hub. In CI with a registry
 # pull-through cache, pass --build-arg REGISTRY=<cache-prefix>/ to route the base image.
 ARG REGISTRY=
 
 # ---- build stage: compile TypeScript, then drop dev deps ----
-FROM ${REGISTRY}node:24-bookworm-slim AS build
+FROM ${REGISTRY}node:24-trixie-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 # --ignore-scripts: skip the `prepare` (tsc) lifecycle here — sources aren't copied yet;
@@ -22,7 +22,7 @@ COPY src ./src
 RUN npm run build && npm prune --omit=dev
 
 # ---- runtime stage ----
-FROM ${REGISTRY}node:24-bookworm-slim
+FROM ${REGISTRY}node:24-trixie-slim
 
 # CACHEBUST_DAY (CI passes $(date +%Y%m%d)) invalidates this layer once per day so
 # `apt upgrade` picks up freshly-published security patches.
