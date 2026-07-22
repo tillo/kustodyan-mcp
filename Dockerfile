@@ -27,10 +27,14 @@ FROM ${REGISTRY}node:24-bookworm-slim
 # CACHEBUST_DAY (CI passes $(date +%Y%m%d)) invalidates this layer once per day so
 # `apt upgrade` picks up freshly-published security patches.
 ARG CACHEBUST_DAY=unset
+# The trailing rm drops the npm CLI bundled in the node base image: nothing invokes
+# npm/npx at runtime (start.sh execs node directly), and npm's vendored deps
+# (tar, undici, brace-expansion) are this image's only fixable CVE findings.
 RUN echo "cache day: ${CACHEBUST_DAY}" && \
     apt-get update && apt-get -y upgrade && \
     apt-get install -y --no-install-recommends nginx gettext-base tini ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
