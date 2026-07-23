@@ -1,8 +1,4 @@
 ignore:
-  - vulnerability: CVE-2026-41992
-    package:
-      name: gzip
-      type: deb
   - vulnerability: CVE-2025-13151
     package:
       name: libtasn1-6
@@ -58,4 +54,26 @@ ignore:
   - vulnerability: CVE-2026-9538
     package:
       name: perl-base
+      type: deb
+
+  # --- added by curator on 2026-07-23 (UTC) ---
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-11822
+    package:
+      name: libsqlite3-0
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-11824
+    package:
+      name: libsqlite3-0
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-54369
+    package:
+      name: libacl1
+      type: deb
+  # High — upstream won't-fix
+  - vulnerability: CVE-2026-54370
+    package:
+      name: libacl1
       type: deb
