@@ -1,56 +1,4 @@
 ignore:
-  - vulnerability: CVE-2025-69720
-    package:
-      name: libtinfo6
-      type: deb
-  - vulnerability: CVE-2025-69720
-    package:
-      name: ncurses-base
-      type: deb
-  - vulnerability: CVE-2025-69720
-    package:
-      name: ncurses-bin
-      type: deb
-  - vulnerability: CVE-2026-42496
-    package:
-      name: perl-base
-      type: deb
-  - vulnerability: CVE-2026-42497
-    package:
-      name: perl-base
-      type: deb
-  - vulnerability: CVE-2026-5435
-    package:
-      name: libc-bin
-      type: deb
-  - vulnerability: CVE-2026-5435
-    package:
-      name: libc6
-      type: deb
-  - vulnerability: CVE-2026-5450
-    package:
-      name: libc-bin
-      type: deb
-  - vulnerability: CVE-2026-5450
-    package:
-      name: libc6
-      type: deb
-  - vulnerability: CVE-2026-5928
-    package:
-      name: libc-bin
-      type: deb
-  - vulnerability: CVE-2026-5928
-    package:
-      name: libc6
-      type: deb
-  - vulnerability: CVE-2026-8376
-    package:
-      name: perl-base
-      type: deb
-  - vulnerability: CVE-2026-9538
-    package:
-      name: perl-base
-      type: deb
   - vulnerability: CVE-2026-11822
     package:
       name: libsqlite3-0
@@ -67,9 +15,6 @@ ignore:
     package:
       name: libacl1
       type: deb
-
-  # --- added by curator on 2026-08-11 (UTC) ---
-  # High — upstream won't-fix
   - vulnerability: CVE-2026-41992
     package:
       name: gzip
